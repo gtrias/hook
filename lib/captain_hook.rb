@@ -14,6 +14,11 @@ module CaptainHook
     end
   end
 
+  class << self
+    attr_accessor :cache_key
+  end
+  self.cache_key = 0
+
   # Class methods for the including class.
   module ClassMethods
     # Main hook configuartion entrypoint, DSL
@@ -30,6 +35,7 @@ module CaptainHook
       skip_when: nil,
       param_builder: nil
     )
+      CaptainHook.cache_key += 1
       hooks[kind][hook] = Configuration.new(
         hook: hook,
         include: include,
@@ -44,13 +50,19 @@ module CaptainHook
     # Hooks logic part
     ####
     def get_hooks(kind)
-      ancestors.each_with_object({}) do |klass, hook_list|
-        next unless klass.respond_to?(:hooks)
+      if @_captain_hook_cache_key != CaptainHook.cache_key
+        @_captain_hooks = {}
+        @_captain_hook_cache_key = CaptainHook.cache_key
+      end
 
-        klass.hooks[kind]&.each_value do |hook|
-          hook_list[hook.hook.class] ||= hook
-        end
-      end.values
+      @_captain_hooks[kind] ||=
+        ancestors.each_with_object({}) do |klass, hook_list|
+          next unless klass.respond_to?(:hooks)
+
+          klass.hooks[kind]&.each_value do |hook|
+            hook_list[hook.hook.class] ||= hook
+          end
+        end.values
     end
 
     def hooks
