@@ -184,11 +184,7 @@ module CaptainHook
 
   # Runs an specific hook based on its configuration
   def run_hook(method, hook_configuration, chain, *args, **kwargs)
-    # puts "Running hook: #{hook_configuration.hook.class.name} with method: #{self.class.name}##{method}"
     hook_configuration.hook.call(self, method, *args, **kwargs, &chain)
-  rescue ArgumentError => e
-    puts "Argument error running hook: #{hook_configuration.hook.class.name} with method: #{method}, args: #{args}, kwargs: #{kwargs}"
-    raise e
   end
 
   def hook_error?(result)
